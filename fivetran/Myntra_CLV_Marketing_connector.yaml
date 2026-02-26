@@ -1,0 +1,21 @@
+connector:
+  name: "Myntra_CLV_Marketing_connector"
+  service: "azure_sql_db"
+  config:
+    host: "{{PLACEHOLDER_SRC_003_HOST}}"
+    port: 1433
+    database: "{{PLACEHOLDER_SRC_003_DB}}"
+    user: "FIVETRAN_USER"
+    password: "{{PLACEHOLDER_SOURCE_DB_PWD}}"
+    update_method: "TELEPORT" # No CDC required
+  destination:
+    service: "snowflake"
+    account: "{{PLACEHOLDER_SNOWFLAKE_ACCOUNT_ID}}"
+    database: "BRONZE"
+    schema: "BRONZE_MARKETING"
+  sync_frequency: "1440" # Minutes (Daily)
+  schemas:
+    - name: "dbo" # Assuming standard dbo schema, adjust if different
+      tables:
+        - name: "MARKETING_CAMPAIGNS"
+          enabled: true
