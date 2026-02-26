@@ -1,0 +1,17 @@
+version: 2
+models:
+  - name: stg_marketing__marketing_campaigns
+    description: "Cleaned Marketing Campaigns"
+    columns:
+      - name: CAMPAIGN_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+      - name: TOTAL_SPEND
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+              config: {severity: warn}
