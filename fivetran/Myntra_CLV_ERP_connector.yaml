@@ -1,0 +1,33 @@
+connector:
+  name: "Myntra_CLV_ERP_connector"
+  service: "azure_sql_db"
+  config:
+    host: "{{PLACEHOLDER_SRC_001_HOST}}"
+    port: 1433
+    database: "{{PLACEHOLDER_SRC_001_DB}}"
+    user: "FIVETRAN_USER"
+    password: "{{PLACEHOLDER_SOURCE_DB_PWD}}"
+    update_method: "NATIVE_UPDATE" # Log-based CDC
+  destination:
+    service: "snowflake"
+    account: "{{PLACEHOLDER_SNOWFLAKE_ACCOUNT_ID}}"
+    database: "BRONZE"
+    schema: "BRONZE_ERP"
+  sync_frequency: "15" # Minutes
+  schemas:
+    - name: "dbo" # Assuming standard dbo schema, adjust if different
+      tables:
+        - name: "OE_ORDER_HEADERS_ALL"
+          enabled: true
+        - name: "OE_ORDER_LINES_ALL"
+          enabled: true
+        - name: "ADDRESSES"
+          enabled: true
+        - name: "CITY_TIER_MASTER"
+          enabled: true
+        - name: "MTL_SYSTEM_ITEMS_B"
+          enabled: true
+        - name: "CATEGORIES"
+          enabled: true
+        - name: "BRANDS"
+          enabled: true
