@@ -1,0 +1,33 @@
+version: 2
+macros:
+  - name: generate_schema_name
+    description: "Prefixes schema with target name in non-prod environments."
+    arguments:
+      - name: custom_schema_name
+        type: string
+      - name: node
+        type: node
+
+  - name: limit_dates_for_dev
+    description: "Limits date range in non-prod environments."
+    arguments:
+      - name: date_col
+        type: string
+
+  - name: email_structure_validation
+    description: "Returns boolean for email format validity."
+    arguments:
+      - name: email_col
+        type: string
+
+  - name: resume_warehouse
+    description: "Resumes warehouse."
+    arguments:
+      - name: warehouse
+        type: string
+
+  - name: suspend_warehouse
+    description: "Suspends warehouse."
+    arguments:
+      - name: warehouse
+        type: string
