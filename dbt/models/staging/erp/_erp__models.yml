@@ -1,0 +1,111 @@
+version: 2
+models:
+  - name: stg_erp__oe_order_headers_all
+    description: "Cleaned Order Headers"
+    columns:
+      - name: ORDER_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+      - name: CUSTOMER_ID
+        data_tests:
+          - not_null:
+              config: {severity: error}
+      - name: TOTAL_AMOUNT
+        data_tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+              config: {severity: error}
+      - name: ORDER_DATE
+        data_tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                max_value: "CURRENT_DATE"
+              config: {severity: warn}
+
+  - name: stg_erp__oe_order_lines_all
+    description: "Cleaned Order Lines"
+    columns:
+      - name: LINE_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+      - name: ORDER_ID
+        data_tests:
+          - not_null:
+              config: {severity: error}
+      - name: QUANTITY
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+              config: {severity: warn}
+
+  - name: stg_erp__addresses
+    description: "Cleaned Addresses"
+    columns:
+      - name: ADDRESS_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+
+  - name: stg_erp__city_tier_master
+    description: "Cleaned City Tiers"
+    columns:
+      - name: CITY_TIER_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+      - name: TIER
+        data_tests:
+          - not_null:
+              config: {severity: warn}
+
+  - name: stg_erp__categories
+    description: "Cleaned Categories"
+    columns:
+      - name: CATEGORY_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+
+  - name: stg_erp__brands
+    description: "Cleaned Brands"
+    columns:
+      - name: BRAND_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+
+  - name: snp_mtl_system_items_b
+    description: "SCD2 Item Master Snapshot"
+    columns:
+      - name: dbt_scd_id
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+      - name: ITEM_ID
+        data_tests:
+          - not_null:
+              config: {severity: error}
+      - name: STATUS
+        data_tests:
+          - not_null:
+              config: {severity: warn}
