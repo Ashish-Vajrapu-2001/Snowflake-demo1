@@ -1,0 +1,119 @@
+-- ============================================================
+-- 1. DATABASES
+-- ============================================================
+CREATE DATABASE IF NOT EXISTS BRONZE;
+CREATE DATABASE IF NOT EXISTS SILVER;
+CREATE DATABASE IF NOT EXISTS GOLD;
+
+-- ============================================================
+-- 2. SCHEMAS
+-- BRONZE_{SOURCE} schemas are created automatically by Fivetran
+-- Pre-create admin schemas only
+-- ============================================================
+CREATE SCHEMA IF NOT EXISTS BRONZE.TAGS;
+CREATE SCHEMA IF NOT EXISTS GOLD.POLICIES;
+
+-- ============================================================
+-- 3. WAREHOUSES
+-- ============================================================
+CREATE WAREHOUSE IF NOT EXISTS LOADING_WH
+    WAREHOUSE_SIZE = 'X-SMALL'
+    AUTO_SUSPEND = 60
+    AUTO_RESUME = TRUE
+    COMMENT = 'Fivetran ingestion warehouse';
+
+CREATE WAREHOUSE IF NOT EXISTS TRANSFORM_WH
+    WAREHOUSE_SIZE = 'SMALL'
+    AUTO_SUSPEND = 60
+    AUTO_RESUME = TRUE
+    COMMENT = 'dbt Core transformation warehouse';
+
+-- ============================================================
+-- 4. ROLES
+-- ============================================================
+CREATE ROLE IF NOT EXISTS LOADER_ROLE;
+CREATE ROLE IF NOT EXISTS TRANSFORMER_ROLE;
+CREATE ROLE IF NOT EXISTS ANALYST_ROLE;
+CREATE ROLE IF NOT EXISTS COMPLIANCE_ROLE;
+CREATE ROLE IF NOT EXISTS ADMIN_ROLE;
+
+GRANT ROLE LOADER_ROLE      TO ROLE SYSADMIN;
+GRANT ROLE TRANSFORMER_ROLE TO ROLE SYSADMIN;
+GRANT ROLE ANALYST_ROLE     TO ROLE SYSADMIN;
+GRANT ROLE COMPLIANCE_ROLE  TO ROLE SYSADMIN;
+GRANT ROLE ADMIN_ROLE       TO ROLE SYSADMIN;
+
+-- ============================================================
+-- 5. FIVETRAN SERVICE USER
+-- ============================================================
+CREATE USER IF NOT EXISTS FIVETRAN_USER
+    TYPE = SERVICE
+    DEFAULT_ROLE = 'LOADER_ROLE'
+    DEFAULT_WAREHOUSE = 'LOADING_WH';
+GRANT ROLE LOADER_ROLE TO USER FIVETRAN_USER;
+
+-- ============================================================
+-- 6. FIVETRAN GRANTS (exactly four — RULE F2)
+-- ============================================================
+GRANT USAGE ON WAREHOUSE LOADING_WH       TO ROLE LOADER_ROLE;
+GRANT USAGE ON DATABASE BRONZE            TO ROLE LOADER_ROLE;
+GRANT CREATE SCHEMA ON DATABASE BRONZE    TO ROLE LOADER_ROLE;
+GRANT MONITOR ON DATABASE BRONZE          TO ROLE LOADER_ROLE;
+
+-- ============================================================
+-- 7. TRANSFORMER GRANTS
+-- ============================================================
+GRANT USAGE ON WAREHOUSE TRANSFORM_WH     TO ROLE TRANSFORMER_ROLE;
+
+-- Bronze: read current objects
+GRANT USAGE ON DATABASE BRONZE                       TO ROLE TRANSFORMER_ROLE;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE BRONZE        TO ROLE TRANSFORMER_ROLE;
+GRANT SELECT ON ALL TABLES  IN DATABASE BRONZE       TO ROLE TRANSFORMER_ROLE;
+
+-- Bronze: FUTURE GRANTS — Fivetran adds new schemas/tables over time (RULE F3)
+GRANT USAGE ON FUTURE SCHEMAS IN DATABASE BRONZE     TO ROLE TRANSFORMER_ROLE;
+GRANT SELECT ON FUTURE TABLES  IN DATABASE BRONZE    TO ROLE TRANSFORMER_ROLE;
+
+-- Silver: write access for dbt
+GRANT USAGE ON DATABASE SILVER                            TO ROLE TRANSFORMER_ROLE;
+GRANT CREATE SCHEMA ON DATABASE SILVER                    TO ROLE TRANSFORMER_ROLE;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE SILVER             TO ROLE TRANSFORMER_ROLE;
+GRANT USAGE ON FUTURE SCHEMAS IN DATABASE SILVER          TO ROLE TRANSFORMER_ROLE;
+GRANT CREATE TABLE ON ALL SCHEMAS IN DATABASE SILVER      TO ROLE TRANSFORMER_ROLE;
+GRANT CREATE TABLE ON FUTURE SCHEMAS IN DATABASE SILVER   TO ROLE TRANSFORMER_ROLE;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE
+    ON ALL TABLES IN DATABASE SILVER                      TO ROLE TRANSFORMER_ROLE;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE
+    ON FUTURE TABLES IN DATABASE SILVER                   TO ROLE TRANSFORMER_ROLE;
+
+-- Gold: write access for dbt
+GRANT USAGE ON DATABASE GOLD                              TO ROLE TRANSFORMER_ROLE;
+GRANT CREATE SCHEMA ON DATABASE GOLD                      TO ROLE TRANSFORMER_ROLE;
+GRANT USAGE ON FUTURE SCHEMAS IN DATABASE GOLD            TO ROLE TRANSFORMER_ROLE;
+GRANT CREATE TABLE ON FUTURE SCHEMAS IN DATABASE GOLD     TO ROLE TRANSFORMER_ROLE;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE
+    ON FUTURE TABLES IN DATABASE GOLD                     TO ROLE TRANSFORMER_ROLE;
+
+-- ============================================================
+-- 8. ANALYST GRANTS (Gold read-only)
+-- ============================================================
+GRANT USAGE ON DATABASE GOLD                              TO ROLE ANALYST_ROLE;
+GRANT USAGE ON FUTURE SCHEMAS IN DATABASE GOLD            TO ROLE ANALYST_ROLE;
+GRANT SELECT ON FUTURE TABLES  IN DATABASE GOLD           TO ROLE ANALYST_ROLE;
+
+-- ============================================================
+-- 9. RESOURCE MONITOR
+-- Assign to BOTH warehouses — NOTIFY not SUSPEND at 100% (RULE F4)
+-- ============================================================
+CREATE RESOURCE MONITOR IF NOT EXISTS Myntra_CLV_Analytics_MONITOR WITH
+    CREDIT_QUOTA = 100
+    FREQUENCY = MONTHLY
+    START_TIMESTAMP = IMMEDIATELY
+    NOTIFY_USERS = ('ADMIN')
+    TRIGGERS
+        ON 75  PERCENT DO NOTIFY
+        ON 90  PERCENT DO NOTIFY
+        ON 100 PERCENT DO NOTIFY;
+
+ALTER WAREHOUSE LOADING_WH   SET RESOURCE_MONITOR = Myntra_CLV_Analytics_MONITOR;
+ALTER WAREHOUSE TRANSFORM_WH SET RESOURCE_MONITOR = Myntra_CLV_Analytics_MONITOR;
