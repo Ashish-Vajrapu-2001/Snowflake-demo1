@@ -1,0 +1,87 @@
+version: 2
+models:
+  - name: snp_customers
+    description: "SCD2 Customer Snapshot"
+    columns:
+      - name: dbt_scd_id
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+      - name: CUSTOMER_ID
+        data_tests:
+          - not_null:
+              config: {severity: error}
+      - name: EMAIL
+        data_tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_match_regex:
+              arguments:
+                regex: "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
+              config: {severity: warn}
+      - name: REGISTRATION_DATE
+        data_tests:
+          - not_null:
+              config: {severity: error}
+
+  - name: stg_crm__customerregistrationsource
+    description: "Cleaned Registration Source"
+    columns:
+      - name: REGISTRATION_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+      - name: CUSTOMER_ID
+        data_tests:
+          - not_null:
+              config: {severity: error}
+      - name: CHANNEL
+        data_tests:
+          - not_null:
+              config: {severity: error}
+
+  - name: stg_crm__incidents
+    description: "Cleaned Incidents"
+    columns:
+      - name: INCIDENT_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+
+  - name: stg_crm__interactions
+    description: "Cleaned Interactions"
+    columns:
+      - name: INTERACTION_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+
+  - name: stg_crm__surveys
+    description: "Cleaned Surveys"
+    columns:
+      - name: SURVEY_ID
+        data_tests:
+          - unique:
+              config: {severity: error}
+          - not_null:
+              config: {severity: error}
+      - name: NPS_SCORE
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 10
+              config: {severity: warn}
+      - name: CSAT_SCORE
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
+              config: {severity: warn}
