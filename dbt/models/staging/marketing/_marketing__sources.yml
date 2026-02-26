@@ -1,0 +1,26 @@
+version: 2
+sources:
+  - name: bronze_marketing
+    database: "{{ env_var('DBT_BRONZE_DB', 'BRONZE') }}"
+    schema: BRONZE_MARKETING
+    config:
+      loaded_at_field: _FIVETRAN_SYNCED
+      freshness:
+        warn_after: {count: 24, period: hour}
+        error_after: {count: 48, period: hour}
+    tables:
+      - name: MARKETING_CAMPAIGNS
+        description: "Marketing Campaigns"
+        columns:
+          - name: CAMPAIGN_ID
+            description: "Primary Key"
+          - name: CAMPAIGN_NAME
+            description: "Name of campaign"
+          - name: TOTAL_SPEND
+            description: "Total spend"
+          - name: CUSTOMERS_ACQUIRED
+            description: "Count of acquired customers"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
