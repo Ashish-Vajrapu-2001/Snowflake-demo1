@@ -1,0 +1,92 @@
+version: 2
+sources:
+  - name: bronze_crm
+    database: "{{ env_var('DBT_BRONZE_DB', 'BRONZE') }}"
+    schema: BRONZE_CRM
+    config:
+      loaded_at_field: _FIVETRAN_SYNCED
+      freshness:
+        warn_after: {count: 60, period: minute}
+        error_after: {count: 240, period: minute}
+    tables:
+      - name: CUSTOMERS
+        description: "CRM Customer Master (SCD2 Source)"
+        columns:
+          - name: CUSTOMER_ID
+            description: "Primary Key"
+          - name: EMAIL
+            description: "Customer Email"
+          - name: PHONE
+            description: "Phone Number"
+          - name: FIRST_NAME
+            description: "First Name"
+          - name: LAST_NAME
+            description: "Last Name"
+          - name: REGISTRATION_DATE
+            description: "Registration Timestamp"
+          - name: CUSTOMER_TYPE
+            description: "Type of customer"
+          - name: STATUS
+            description: "Customer status"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: CUSTOMERREGISTRATIONSOURCE
+        description: "Registration Source Channel"
+        columns:
+          - name: REGISTRATION_ID
+            description: "Primary Key"
+          - name: CUSTOMER_ID
+            description: "Foreign Key"
+          - name: CHANNEL
+            description: "Acquisition Channel"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: INCIDENTS
+        description: "Support Incidents"
+        columns:
+          - name: INCIDENT_ID
+            description: "Primary Key"
+          - name: CUSTOMER_ID
+            description: "Foreign Key"
+          - name: INCIDENT_DATE
+            description: "Date of incident"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: INTERACTIONS
+        description: "Customer Interactions"
+        columns:
+          - name: INTERACTION_ID
+            description: "Primary Key"
+          - name: CUSTOMER_ID
+            description: "Foreign Key"
+          - name: INTERACTION_DATE
+            description: "Date of interaction"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: SURVEYS
+        description: "NPS/CSAT Surveys"
+        columns:
+          - name: SURVEY_ID
+            description: "Primary Key"
+          - name: CUSTOMER_ID
+            description: "Foreign Key"
+          - name: NPS_SCORE
+            description: "NPS Score (0-10)"
+          - name: CSAT_SCORE
+            description: "CSAT Score (1-5)"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
