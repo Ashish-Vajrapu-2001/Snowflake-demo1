@@ -1,0 +1,73 @@
+name: 'myntra_clv_dbt'
+version: '1.0.0'
+config-version: 2
+profile: 'myntra_clv'
+require-dbt-version: [">=1.8.0", "<2.0.0"]
+
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+analysis-paths: ["analyses"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# dbt 1.8+ flags block
+flags:
+  send_anonymous_usage_stats: false
+  use_colors: true
+  warn_error: false
+  skip_nodes_if_on_run_start_fails: true
+  require_explicit_package_overrides_for_builtin_materializations: true
+
+query-comment:
+  comment: "myntra_clv_dbt[[[{{ node.unique_id }}:{{ invocation_id }}]]]"
+  append: true
+
+# Warehouse hooks (commented out for cost control)
+# on-run-start:
+#   - "{{ resume_warehouse(target.warehouse) }}"
+# on-run-end:
+#   - "{{ suspend_warehouse(target.warehouse) }}"
+
+vars:
+  silver_lookback_days: 3
+  dev_num_days_to_include: 90
+  min_date: "2000-01-01"
+
+models:
+  myntra_clv_dbt:
+    +copy_grants: true
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +materialized: incremental
+      +incremental_strategy: merge
+      +on_schema_change: append_new_columns
+      +full_refresh: false
+      +database: "{{ env_var('DBT_SILVER_DB', 'SILVER') }}"
+      erp:
+        +schema: SILVER_ERP
+        +tags: ['silver', 'erp']
+      crm:
+        +schema: SILVER_CRM
+        +tags: ['silver', 'crm']
+      marketing:
+        +schema: SILVER_MARKETING
+        +tags: ['silver', 'marketing']
+
+snapshots:
+  myntra_clv_dbt:
+    +target_database: "{{ env_var('DBT_SILVER_DB', 'SILVER') }}"
+    +strategy: timestamp
+    +updated_at: _FIVETRAN_SYNCED
+    +hard_deletes: new_record
+    +dbt_valid_to_current: "to_date('9999-12-31')"
+    +copy_grants: true
+
+quoting:
+  database: false
+  schema: false
+  identifier: false
