@@ -1,0 +1,116 @@
+version: 2
+sources:
+  - name: bronze_erp
+    database: "{{ env_var('DBT_BRONZE_DB', 'BRONZE') }}"
+    schema: BRONZE_ERP
+    config:
+      loaded_at_field: _FIVETRAN_SYNCED
+      freshness:
+        warn_after: {count: 60, period: minute}
+        error_after: {count: 240, period: minute}
+    tables:
+      - name: OE_ORDER_HEADERS_ALL
+        description: "ERP Order Headers"
+        columns:
+          - name: ORDER_ID
+            description: "Primary Key"
+          - name: CUSTOMER_ID
+            description: "Foreign Key to Customers"
+          - name: ORDER_DATE
+            description: "Date of order"
+          - name: TOTAL_AMOUNT
+            description: "Total order amount"
+          - name: ORDER_STATUS
+            description: "Status of order"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: OE_ORDER_LINES_ALL
+        description: "ERP Order Lines"
+        columns:
+          - name: LINE_ID
+            description: "Primary Key"
+          - name: ORDER_ID
+            description: "Foreign Key to Headers"
+          - name: ITEM_ID
+            description: "Item identifier"
+          - name: QUANTITY
+            description: "Quantity ordered"
+          - name: UNIT_PRICE
+            description: "Price per unit"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: ADDRESSES
+        description: "ERP Addresses"
+        columns:
+          - name: ADDRESS_ID
+            description: "Primary Key"
+          - name: CITY
+            description: "City name"
+          - name: STATE
+            description: "State name"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: CITY_TIER_MASTER
+        description: "City Tier Reference"
+        columns:
+          - name: CITY_TIER_ID
+            description: "Primary Key"
+          - name: CITY
+            description: "City name"
+          - name: STATE
+            description: "State name"
+          - name: TIER
+            description: "City Tier"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: MTL_SYSTEM_ITEMS_B
+        description: "Item Master (SCD2 Source)"
+        columns:
+          - name: ITEM_ID
+            description: "Primary Key"
+          - name: STATUS
+            description: "Item status"
+          - name: CATEGORY_ID
+            description: "Category FK"
+          - name: BRAND_ID
+            description: "Brand FK"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: CATEGORIES
+        description: "Product Categories"
+        columns:
+          - name: CATEGORY_ID
+            description: "Primary Key"
+          - name: CATEGORY_NAME
+            description: "Category Name"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
+
+      - name: BRANDS
+        description: "Product Brands"
+        columns:
+          - name: BRAND_ID
+            description: "Primary Key"
+          - name: BRAND_NAME
+            description: "Brand Name"
+          - name: _FIVETRAN_SYNCED
+            description: "Sync timestamp"
+          - name: _FIVETRAN_DELETED
+            description: "Soft delete flag"
